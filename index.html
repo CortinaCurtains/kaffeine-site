@@ -120,7 +120,11 @@
         </div>
         <div class="contact-line">
           <svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2zm8 7L4 6.5V18h16V6.5L12 11z"/></svg>
-          <a href="mailto:8780250@gmail.com">8780250@gmail.com</a>
+          <button type="button" class="copy-email" data-email="8780250@gmail.com" title="Click to copy">8780250@gmail.com</button>
+        </div>
+        <div class="contact-line">
+          <svg viewBox="0 0 24 24"><path d="M12 2C8.1 2 5 5.1 5 9c0 5.2 7 13 7 13s7-7.8 7-13c0-3.9-3.1-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>
+          154 University Ave, Toronto, ON
         </div>
         <div class="contact-line">
           <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm6.9 6h-2.6a15.6 15.6 0 0 0-1.3-3.4A8 8 0 0 1 18.9 8zM12 4c.8 1 1.5 2.4 1.9 4h-3.8C10.5 6.4 11.2 5 12 4zM4.3 14a8 8 0 0 1 0-4h3a18 18 0 0 0 0 4h-3zm.8 2h2.6c.3 1.2.8 2.4 1.3 3.4A8 8 0 0 1 5.1 16zm2.6-8H5.1a8 8 0 0 1 3.9-3.4C8.4 5.6 8 6.8 7.7 8zM12 20c-.8-1-1.5-2.4-1.9-4h3.8c-.4 1.6-1.1 3-1.9 4zm2.3-6h-4.6a16 16 0 0 1 0-4h4.6a16 16 0 0 1 0 4zm.4 5.4c.5-1 1-2.2 1.3-3.4h2.6a8 8 0 0 1-3.9 3.4zM17 14a18 18 0 0 0 0-4h3a8 8 0 0 1 0 4h-3z"/></svg>
@@ -129,10 +133,16 @@
         <p style="color:var(--muted);margin-top:18px;font-size:.92rem">Owner · Chris Dimitrakoudis</p>
       </div>
       <div class="card">
-        <h3>Catering &amp; Inquiries</h3>
-        <p style="color:#cfc8b9;margin-top:0">Hosting an event, looking to stock our beans, or just have a
-           question? Give us a call or send a note — we'll get right back to you.</p>
-        <a class="btn solid" style="margin-top:10px" href="mailto:8780250@gmail.com">Email Us</a>
+        <h3>Send Us a Note</h3>
+        <p style="color:#cfc8b9;margin-top:0;margin-bottom:18px">Catering, wholesale beans, or just a question —
+           drop us a message and we'll get right back to you.</p>
+        <form class="contact-form" action="https://formspree.io/f/REPLACE_WITH_FORM_ID" method="POST">
+          <input type="text" name="name" placeholder="Your name" required>
+          <input type="email" name="email" placeholder="Your email" required>
+          <textarea name="message" rows="4" placeholder="Your message" required></textarea>
+          <button type="submit" class="btn solid" style="width:100%">Send Message</button>
+          <p class="form-note">Or email us directly at <button type="button" class="copy-email" data-email="8780250@gmail.com">8780250@gmail.com</button></p>
+        </form>
       </div>
     </div>
   </div>
@@ -151,6 +161,61 @@
     <small>© <span id="yr"></span> Kaffeine. All rights reserved.</small>
   </div>
 </footer>
-<script>document.getElementById('yr').textContent=new Date().getFullYear();</script>
+<script>
+  document.getElementById('yr').textContent = new Date().getFullYear();
+
+  // Click-to-copy email (works without a mail app)
+  document.querySelectorAll('.copy-email').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var email = btn.dataset.email;
+      navigator.clipboard && navigator.clipboard.writeText(email).then(function () {
+        btn.classList.add('copied');
+        setTimeout(function () { btn.classList.remove('copied'); }, 2000);
+      });
+    });
+  });
+
+  // Contact form: submit via fetch to Formspree, show inline result (no page reload)
+  document.querySelectorAll('.contact-form').forEach(function (form) {
+    var note = document.createElement('p');
+    note.className = 'form-msg';
+    form.appendChild(note);
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      // If the endpoint hasn't been configured yet, fall back to a prefilled email.
+      if (form.action.indexOf('REPLACE_WITH_FORM_ID') !== -1) {
+        var data = new FormData(form);
+        var subject = encodeURIComponent('Website message from ' + (data.get('name') || 'a visitor'));
+        var body = encodeURIComponent((data.get('message') || '') + '\n\n— ' + (data.get('name') || '') + ' (' + (data.get('email') || '') + ')');
+        window.location.href = 'mailto:8780250@gmail.com?subject=' + subject + '&body=' + body;
+        return;
+      }
+      var btn = form.querySelector('button[type=submit]');
+      var label = btn.textContent;
+      btn.textContent = 'Sending…';
+      btn.disabled = true;
+      fetch(form.action, {
+        method: 'POST',
+        body: new FormData(form),
+        headers: { Accept: 'application/json' }
+      }).then(function (r) {
+        if (r.ok) {
+          note.className = 'form-msg ok';
+          note.textContent = 'Thanks! Your message has been sent — we’ll be in touch soon.';
+          form.reset();
+        } else {
+          note.className = 'form-msg err';
+          note.textContent = 'Something went wrong. Please email us directly at 8780250@gmail.com.';
+        }
+      }).catch(function () {
+        note.className = 'form-msg err';
+        note.textContent = 'Something went wrong. Please email us directly at 8780250@gmail.com.';
+      }).finally(function () {
+        btn.textContent = label;
+        btn.disabled = false;
+      });
+    });
+  });
+</script>
 </body>
 </html>

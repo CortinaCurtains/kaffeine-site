@@ -73,13 +73,25 @@
 
     <!-- APPLY -->
     <div id="apply" class="apply-box">
-      <h3>How to Apply</h3>
-      <p style="color:#cfc8b9;max-width:60ch;margin:0 auto 18px">
-        Send us a quick note with your name, the role you're interested in, and your availability.
-        Attach a résumé if you have one — and feel free to drop by in person to say hello.</p>
-      <p style="margin:0 0 6px"><a class="btn solid" href="mailto:8780250@gmail.com?subject=Kaffeine%20Application">Email Your Application</a></p>
-      <p style="color:var(--muted);margin-top:18px;font-size:.92rem">
-        Or call <a href="tel:+14168780250">416-878-0250</a> · Ask for Chris</p>
+      <h3>Apply Now</h3>
+      <p style="color:#cfc8b9;max-width:56ch;margin:0 auto 22px">
+        Tell us a bit about yourself and we'll be in touch. Feel free to drop by in person too.</p>
+      <form class="contact-form" action="https://formspree.io/f/REPLACE_WITH_FORM_ID" method="POST" style="max-width:460px;margin:0 auto;text-align:left">
+        <input type="hidden" name="_subject" value="Kaffeine job application">
+        <input type="text" name="name" placeholder="Full name" required>
+        <input type="email" name="email" placeholder="Email" required>
+        <input type="tel" name="phone" placeholder="Phone (optional)">
+        <select name="role" required>
+          <option value="" disabled selected>Role you're applying for…</option>
+          <option value="Barista">Barista</option>
+          <option value="Shift Lead">Shift Lead</option>
+          <option value="Either">Either / Not sure</option>
+        </select>
+        <input type="text" name="availability" placeholder="Your availability (e.g. weekends, mornings)">
+        <textarea name="message" rows="4" placeholder="Tell us about yourself (experience, why Kaffeine)"></textarea>
+        <button type="submit" class="btn solid" style="width:100%">Submit Application</button>
+        <p class="form-note">Or email us at <button type="button" class="copy-email" data-email="8780250@gmail.com">8780250@gmail.com</button> · call <a href="tel:+14168780250">416-878-0250</a> (ask for Chris)</p>
+      </form>
     </div>
   </div>
 </section>
@@ -97,6 +109,65 @@
     <small>© <span id="yr"></span> Kaffeine. All rights reserved.</small>
   </div>
 </footer>
-<script>document.getElementById('yr').textContent=new Date().getFullYear();</script>
+<script>
+  document.getElementById('yr').textContent = new Date().getFullYear();
+
+  document.querySelectorAll('.copy-email').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var email = btn.dataset.email;
+      navigator.clipboard && navigator.clipboard.writeText(email).then(function () {
+        btn.classList.add('copied');
+        setTimeout(function () { btn.classList.remove('copied'); }, 2000);
+      });
+    });
+  });
+
+  document.querySelectorAll('.contact-form').forEach(function (form) {
+    var note = document.createElement('p');
+    note.className = 'form-msg';
+    form.appendChild(note);
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      if (form.action.indexOf('REPLACE_WITH_FORM_ID') !== -1) {
+        var data = new FormData(form);
+        var subject = encodeURIComponent('Kaffeine application — ' + (data.get('name') || ''));
+        var body = encodeURIComponent(
+          'Name: ' + (data.get('name') || '') + '\n' +
+          'Email: ' + (data.get('email') || '') + '\n' +
+          'Phone: ' + (data.get('phone') || '') + '\n' +
+          'Role: ' + (data.get('role') || '') + '\n' +
+          'Availability: ' + (data.get('availability') || '') + '\n\n' +
+          (data.get('message') || '')
+        );
+        window.location.href = 'mailto:8780250@gmail.com?subject=' + subject + '&body=' + body;
+        return;
+      }
+      var btn = form.querySelector('button[type=submit]');
+      var label = btn.textContent;
+      btn.textContent = 'Sending…';
+      btn.disabled = true;
+      fetch(form.action, {
+        method: 'POST',
+        body: new FormData(form),
+        headers: { Accept: 'application/json' }
+      }).then(function (r) {
+        if (r.ok) {
+          note.className = 'form-msg ok';
+          note.textContent = 'Thanks for applying! We’ll review your application and be in touch.';
+          form.reset();
+        } else {
+          note.className = 'form-msg err';
+          note.textContent = 'Something went wrong. Please email us at 8780250@gmail.com.';
+        }
+      }).catch(function () {
+        note.className = 'form-msg err';
+        note.textContent = 'Something went wrong. Please email us at 8780250@gmail.com.';
+      }).finally(function () {
+        btn.textContent = label;
+        btn.disabled = false;
+      });
+    });
+  });
+</script>
 </body>
 </html>
